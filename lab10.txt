@@ -1,0 +1,72 @@
+import org.apache.spark._
+import org.apache.spark.streaming._
+
+object TextCleaningStreaming {
+
+  def main(args: Array[String]): Unit = {
+
+    // Create Spark Configuration
+    val conf = new SparkConf()
+      .setAppName("TextCleaningStreaming")
+      .setMaster("local[*]")
+
+    // Create Streaming Context (batch interval = 5 sec)
+    val ssc = new StreamingContext(conf, Seconds(5))
+
+    // Read data from socket (hostname, port)
+    val lines = ssc.socketTextStream("localhost", 9999)
+
+    // Basic stop words list
+    val stopWords = Set(
+      "the", "is", "in", "and", "to", "of", "a", "an", "on", "for", "with"
+    )
+
+    // Processing
+    val cleaned = lines.flatMap(line => {
+
+      // Step 1: Lowercase
+      val lower = line.toLowerCase
+
+      // Step 2: Remove punctuation
+      val noPunct = lower.replaceAll("[^a-z\\s]", "")
+
+      // Step 3: Remove extra spaces
+      val words = noPunct.trim.split("\\s+")
+
+      // Step 4: Remove stop words + basic lemmatization
+      words
+        .filter(word => !stopWords.contains(word))
+        .map(word => lemmatize(word))
+    })
+
+    // Print cleaned words
+    cleaned.print()
+
+    // Start streaming
+    ssc.start()
+    ssc.awaitTermination()
+  }
+
+  // Simple lemmatization (basic rules for exam purpose)
+  def lemmatize(word: String): String = {
+    if (word.endsWith("ing") && word.length > 4)
+      word.dropRight(3)
+    else if (word.endsWith("ed") && word.length > 3)
+      word.dropRight(2)
+    else if (word.endsWith("s") && word.length > 3)
+      word.dropRight(1)
+    else
+      word
+  }
+}
+
+
+RUN 
+
+nc -lk 9999
+
+spark-submit --class TextCleaningStreaming yourjar.jar
+
+INPUT 
+
+The cats are running in the garden and playing

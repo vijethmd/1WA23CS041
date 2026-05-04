@@ -1,0 +1,52 @@
+# ==========================================
+# HDFS COMMANDS (HADOOP FILE SYSTEM)
+# ==========================================
+
+# 1. List files in HDFS root directory
+hdfs dfs -ls /
+
+# 2. Create a directory in HDFS
+hdfs dfs -mkdir /user
+
+# 3. Create nested directories
+hdfs dfs -mkdir -p /user/student/data
+
+# 4. Upload file from local system to HDFS
+hdfs dfs -put localfile.txt /user/student/data
+
+# 5. Upload file (alternative command)
+hdfs dfs -copyFromLocal localfile.txt /user/student/data
+
+# 6. View contents of file
+hdfs dfs -cat /user/student/data/localfile.txt
+
+# 7. Download file from HDFS to local
+hdfs dfs -get /user/student/data/localfile.txt
+
+# 8. Copy file within HDFS
+hdfs dfs -cp /user/student/data/localfile.txt /user/student/data/copy.txt
+
+# 9. Move/Rename file
+hdfs dfs -mv /user/student/data/copy.txt /user/student/data/newfile.txt
+
+# 10. Display file size and disk usage
+hdfs dfs -du /user/student/data
+
+# 11. Check disk usage summary
+hdfs dfs -df
+
+# 12. Count files and directories
+hdfs dfs -count /user/student
+
+# 13. Remove file
+hdfs dfs -rm /user/student/data/newfile.txt
+
+# 14. Remove directory recursively
+hdfs dfs -rm -r /user/student/data
+
+# 15. Display file in human-readable format
+hdfs dfs -text /user/student/data/localfile.txt
+
+# ==========================================
+# END OF HDFS COMMANDS
+# ==========================================

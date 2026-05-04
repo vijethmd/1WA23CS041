@@ -1,0 +1,43 @@
+import org.apache.spark.{SparkConf, SparkContext}
+
+object WordCountFilter {
+  def main(args: Array[String]): Unit = {
+
+    // Create Spark Context
+    val conf = new SparkConf().setAppName("WordCountFilter").setMaster("local[*]")
+    val sc = new SparkContext(conf)
+
+    // Load file
+    val data = sc.textFile("input.txt")
+
+    // Step 1: Split lines into words using flatMap
+    val words = data.flatMap(line => line.split("\\s+"))
+
+    // Step 2: Map each word to (word, 1)
+    val pairs = words.map(word => (word.toLowerCase, 1))
+
+    // Step 3: Reduce to count occurrences
+    val counts = pairs.reduceByKey(_ + _)
+
+    // Step 4: Filter words with count > 4
+    val result = counts.filter { case (word, count) => count > 4 }
+
+    // Step 5: Save output
+    result.saveAsTextFile("output")
+
+    // Optional: print to console
+    result.collect().foreach(println)
+
+    sc.stop()
+  }
+}
+
+
+STEPS 
+
+
+# Compile
+scalac WordCountFilter.scala
+
+# Run (using spark-submit)
+spark-submit --class WordCountFilter WordCountFilter.jar

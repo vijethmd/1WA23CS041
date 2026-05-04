@@ -1,0 +1,17 @@
+object PrintNumbers {
+  def main(args: Array[String]): Unit = {
+
+    for (i <- 1 to 100) {
+      println(i)
+    }
+
+  }
+}
+
+
+alternative
+
+
+for (i <- 1 until 101) {
+  println(i)
+}

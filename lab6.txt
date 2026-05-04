@@ -1,0 +1,162 @@
+BASH
+
+# Download data (example)
+wget https://raw.githubusercontent.com/tomwhite/hadoopbook/master/input/ncdc/all/1901.gz
+
+# Unzip
+gunzip 1901.gz
+
+# Upload to HDFS
+hdfs dfs -mkdir /weather
+hdfs dfs -put 1901 /weather
+
+
+AVG TEMP 
+
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class AvgTempYear {
+
+    public static class MapperClass extends Mapper<Object, Text, Text, IntWritable> {
+        public void map(Object key, Text value, Context context)
+                throws IOException, InterruptedException {
+
+            String line = value.toString();
+
+            if (line.length() < 93) return;
+
+            String year = line.substring(15, 19);
+            int temp = Integer.parseInt(line.substring(87, 92));
+
+            if (temp != 9999) {
+                context.write(new Text(year), new IntWritable(temp));
+            }
+        }
+    }
+
+    public static class ReducerClass extends Reducer<Text, IntWritable, Text, FloatWritable> {
+        public void reduce(Text key, Iterable<IntWritable> values, Context context)
+                throws IOException, InterruptedException {
+
+            int sum = 0, count = 0;
+
+            for (IntWritable val : values) {
+                sum += val.get();
+                count++;
+            }
+
+            float avg = (float) sum / count;
+            context.write(key, new FloatWritable(avg));
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "Average Temp Per Year");
+
+        job.setJarByClass(AvgTempYear.class);
+        job.setMapperClass(MapperClass.class);
+        job.setReducerClass(ReducerClass.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(FloatWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+
+MEAN MAX
+
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class AvgTempMonth {
+
+    public static class MapperClass extends Mapper<Object, Text, Text, IntWritable> {
+        public void map(Object key, Text value, Context context)
+                throws IOException, InterruptedException {
+
+            String line = value.toString();
+
+            if (line.length() < 93) return;
+
+            String year = line.substring(15, 19);
+            String month = line.substring(19, 21);
+            int temp = Integer.parseInt(line.substring(87, 92));
+
+            if (temp != 9999) {
+                context.write(new Text(year + "-" + month), new IntWritable(temp));
+            }
+        }
+    }
+
+    public static class ReducerClass extends Reducer<Text, IntWritable, Text, FloatWritable> {
+        public void reduce(Text key, Iterable<IntWritable> values, Context context)
+                throws IOException, InterruptedException {
+
+            int sum = 0, count = 0;
+
+            for (IntWritable val : values) {
+                sum += val.get();
+                count++;
+            }
+
+            float avg = (float) sum / count;
+            context.write(key, new FloatWritable(avg));
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "Avg Max Temp Per Month");
+
+        job.setJarByClass(AvgTempMonth.class);
+        job.setMapperClass(MapperClass.class);
+        job.setReducerClass(ReducerClass.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(FloatWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+
+
+
+STEPS 
+
+
+# Compile
+javac -classpath `hadoop classpath` -d . AvgTempYear.java AvgTempMonth.java
+
+# Create JAR
+jar -cvf weather.jar *
+
+# Run (Year Average)
+hadoop jar weather.jar AvgTempYear /weather /out_year
+
+# Run (Month Average)
+hadoop jar weather.jar AvgTempMonth /weather /out_month
+
+# View output
+hdfs dfs -cat /out_year/part-r-00000
+hdfs dfs -cat /out_month/part-r-00000

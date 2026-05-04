@@ -1,0 +1,167 @@
+// ==========================================
+// MONGODB CRUD OPERATIONS (FULL VARIATIONS)
+// ==========================================
+
+// Switch / Create Database
+use collegeDB
+
+// ==========================================
+// CREATE (INSERT)
+// ==========================================
+
+// Insert one document
+db.students.insertOne({
+  name: "Rahul",
+  age: 20,
+  course: "CSE",
+  marks: 85,
+  skills: ["Java", "MongoDB"]
+})
+
+// Insert multiple documents
+db.students.insertMany([
+  {name: "Amit", age: 21, course: "ECE", marks: 75},
+  {name: "Priya", age: 19, course: "IT", marks: 90},
+  {name: "John", age: 23, course: "CSE", marks: 60}
+])
+
+// ==========================================
+// READ (FIND)
+// ==========================================
+
+// Fetch all
+db.students.find()
+
+// Pretty output
+db.students.find().pretty()
+
+// Projection (include specific fields)
+db.students.find({}, {name: 1, course: 1})
+
+// Exclude field
+db.students.find({}, {_id: 0})
+
+// ==========================================
+// FILTER OPERATORS
+// ==========================================
+
+// Comparison
+db.students.find({age: {$gt: 20}})
+db.students.find({age: {$lt: 22}})
+db.students.find({age: {$gte: 20}})
+db.students.find({age: {$lte: 21}})
+db.students.find({age: {$ne: 20}})
+
+// Logical
+db.students.find({$and: [{course: "CSE"}, {age: {$gt: 20}}]})
+db.students.find({$or: [{course: "IT"}, {marks: {$gt: 80}}]})
+db.students.find({course: {$in: ["CSE", "IT"]}})
+db.students.find({course: {$nin: ["ECE"]}})
+
+// Element
+db.students.find({skills: {$exists: true}})
+db.students.find({skills: {$type: "array"}})
+
+// Evaluation
+db.students.find({name: {$regex: "^R"}})  // starts with R
+
+// ==========================================
+// SORT, LIMIT, SKIP
+// ==========================================
+
+db.students.find().sort({marks: 1})   // ascending
+db.students.find().sort({marks: -1})  // descending
+db.students.find().limit(2)
+db.students.find().skip(1)
+
+// ==========================================
+// UPDATE
+// ==========================================
+
+// Update one
+db.students.updateOne(
+  {name: "Rahul"},
+  {$set: {age: 22}}
+)
+
+// Update many
+db.students.updateMany(
+  {course: "CSE"},
+  {$set: {course: "Computer Science"}}
+)
+
+// Increment
+db.students.updateOne(
+  {name: "Rahul"},
+  {$inc: {marks: 5}}
+)
+
+// Rename field
+db.students.updateOne(
+  {name: "Rahul"},
+  {$rename: {"course": "branch"}}
+)
+
+// Remove field
+db.students.updateOne(
+  {name: "Rahul"},
+  {$unset: {marks: ""}}
+)
+
+// Upsert (insert if not exists)
+db.students.updateOne(
+  {name: "Kiran"},
+  {$set: {age: 25, course: "ME"}},
+  {upsert: true}
+)
+
+// Replace document
+db.students.replaceOne(
+  {name: "Amit"},
+  {name: "Amit", age: 30, course: "MBA"}
+)
+
+// ==========================================
+// ARRAY OPERATIONS
+// ==========================================
+
+// Add element to array
+db.students.updateOne(
+  {name: "Rahul"},
+  {$push: {skills: "Python"}}
+)
+
+// Add multiple elements
+db.students.updateOne(
+  {name: "Rahul"},
+  {$push: {skills: {$each: ["C++", "SQL"]}}}
+)
+
+// Remove element from array
+db.students.updateOne(
+  {name: "Rahul"},
+  {$pull: {skills: "Java"}}
+)
+
+// ==========================================
+// DELETE
+// ==========================================
+
+// Delete one
+db.students.deleteOne({name: "John"})
+
+// Delete many
+db.students.deleteMany({age: {$lt: 20}})
+
+// Delete all
+db.students.deleteMany({})
+
+// Drop collection
+db.students.drop()
+
+// Drop database
+db.dropDatabase()
+
+// ==========================================
+// END OF COMPLETE CRUD
+// ==========================================

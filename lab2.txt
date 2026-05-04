@@ -1,0 +1,97 @@
+-- ==========================================
+-- APACHE CASSANDRA DB OPERATIONS
+-- ==========================================
+
+-- a) CREATE KEYSPACE
+CREATE KEYSPACE Employee
+WITH replication = {
+  'class': 'SimpleStrategy',
+  'replication_factor': 1
+};
+
+-- Use keyspace
+USE Employee;
+
+-- ==========================================
+-- b) CREATE TABLE (COLUMN FAMILY)
+-- ==========================================
+
+CREATE TABLE Employee_Info (
+  Emp_Id INT PRIMARY KEY,
+  Emp_Name TEXT,
+  Designation TEXT,
+  Date_of_Joining DATE,
+  Salary INT,
+  Dept_Name TEXT
+);
+
+-- ==========================================
+-- c) INSERT VALUES USING BATCH
+-- ==========================================
+
+BEGIN BATCH
+INSERT INTO Employee_Info (Emp_Id, Emp_Name, Designation, Date_of_Joining, Salary, Dept_Name)
+VALUES (121, 'Rahul', 'Engineer', '2022-01-10', 50000, 'IT');
+
+INSERT INTO Employee_Info (Emp_Id, Emp_Name, Designation, Date_of_Joining, Salary, Dept_Name)
+VALUES (122, 'Amit', 'Manager', '2021-05-15', 70000, 'HR');
+
+INSERT INTO Employee_Info (Emp_Id, Emp_Name, Designation, Date_of_Joining, Salary, Dept_Name)
+VALUES (123, 'Priya', 'Analyst', '2023-03-20', 45000, 'Finance');
+APPLY BATCH;
+
+-- ==========================================
+-- d) UPDATE Employee name & department for Emp_Id = 121
+-- ==========================================
+
+UPDATE Employee_Info
+SET Emp_Name = 'Rohan',
+    Dept_Name = 'Operations'
+WHERE Emp_Id = 121;
+
+-- ==========================================
+-- e) SORT RECORDS BASED ON SALARY
+-- (Requires ALLOW FILTERING since Salary is not clustering key)
+-- ==========================================
+
+SELECT * FROM Employee_Info
+ORDER BY Salary ASC ALLOW FILTERING;
+
+-- ==========================================
+-- f) ALTER TABLE TO ADD SET COLUMN (Projects)
+-- ==========================================
+
+ALTER TABLE Employee_Info
+ADD Projects SET<TEXT>;
+
+-- ==========================================
+-- g) UPDATE PROJECTS (SET VALUES)
+-- ==========================================
+
+UPDATE Employee_Info
+SET Projects = {'ProjectA', 'ProjectB'}
+WHERE Emp_Id = 121;
+
+UPDATE Employee_Info
+SET Projects = {'ProjectX'}
+WHERE Emp_Id = 122;
+
+-- Add more projects using +
+UPDATE Employee_Info
+SET Projects = Projects + {'ProjectC'}
+WHERE Emp_Id = 121;
+
+-- ==========================================
+-- h) TTL OF 15 SECONDS
+-- ==========================================
+
+INSERT INTO Employee_Info (Emp_Id, Emp_Name, Designation, Date_of_Joining, Salary, Dept_Name)
+VALUES (124, 'Kiran', 'Developer', '2024-02-01', 60000, 'IT')
+USING TTL 15;
+
+-- View data
+SELECT * FROM Employee_Info;
+
+-- ==========================================
+-- END OF PROGRAM
+-- ==========================================

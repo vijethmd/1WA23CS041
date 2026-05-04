@@ -1,0 +1,116 @@
+-- ==========================================
+-- APACHE CASSANDRA - LIBRARY OPERATIONS
+-- ==========================================
+
+-- a) CREATE KEYSPACE
+CREATE KEYSPACE Library
+WITH replication = {
+  'class': 'SimpleStrategy',
+  'replication_factor': 1
+};
+
+-- Use keyspace
+USE Library;
+
+-- ==========================================
+-- b) CREATE TABLE (COLUMN FAMILY)
+-- NOTE:
+-- Counter columns MUST be in a separate table
+-- ==========================================
+
+-- Main table (normal columns)
+CREATE TABLE Library_Info (
+  Stud_Id INT PRIMARY KEY,
+  Stud_Name TEXT,
+  Book_Name TEXT,
+  Book_Id INT,
+  Date_of_issue DATE
+);
+
+-- Counter table (separate, REQUIRED in Cassandra)
+CREATE TABLE Library_Counter (
+  Stud_Id INT PRIMARY KEY,
+  Counter_value COUNTER
+);
+
+-- ==========================================
+-- c) INSERT VALUES USING BATCH
+-- NOTE: Counters CANNOT be used inside BEGIN BATCH with normal inserts
+-- ==========================================
+
+BEGIN BATCH
+INSERT INTO Library_Info (Stud_Id, Stud_Name, Book_Name, Book_Id, Date_of_issue)
+VALUES (112, 'Rahul', 'BDA', 101, '2024-01-10');
+
+INSERT INTO Library_Info (Stud_Id, Stud_Name, Book_Name, Book_Id, Date_of_issue)
+VALUES (113, 'Amit', 'DBMS', 102, '2024-01-12');
+
+INSERT INTO Library_Info (Stud_Id, Stud_Name, Book_Name, Book_Id, Date_of_issue)
+VALUES (114, 'Priya', 'AI', 103, '2024-01-15');
+APPLY BATCH;
+
+-- Initialize / increment counter separately
+UPDATE Library_Counter
+SET Counter_value = Counter_value + 1
+WHERE Stud_Id = 112;
+
+UPDATE Library_Counter
+SET Counter_value = Counter_value + 1
+WHERE Stud_Id = 113;
+
+-- ==========================================
+-- d) DISPLAY DETAILS & INCREMENT COUNTER
+-- ==========================================
+
+-- Display table
+SELECT * FROM Library_Info;
+
+-- Increase counter
+UPDATE Library_Counter
+SET Counter_value = Counter_value + 1
+WHERE Stud_Id = 112;
+
+-- View counter
+SELECT * FROM Library_Counter;
+
+-- ==========================================
+-- e) SHOW STUDENT 112 TOOK "BDA" 2 TIMES
+-- ==========================================
+
+-- Increment counter again to make it 2
+UPDATE Library_Counter
+SET Counter_value = Counter_value + 1
+WHERE Stud_Id = 112;
+
+-- Query
+SELECT l.Stud_Id, l.Stud_Name, l.Book_Name, c.Counter_value
+FROM Library_Info l
+JOIN Library_Counter c
+ON l.Stud_Id = c.Stud_Id
+WHERE l.Stud_Id = 112 ALLOW FILTERING;
+
+-- (Note: Cassandra does NOT support JOIN in real systems,
+-- but for exam representation this is often written.
+-- Alternatively:)
+
+SELECT * FROM Library_Info WHERE Stud_Id = 112;
+SELECT * FROM Library_Counter WHERE Stud_Id = 112;
+
+-- ==========================================
+-- f) EXPORT TO CSV (FROM TERMINAL USING cqlsh)
+-- ==========================================
+
+-- Run in cqlsh (NOT inside CQL script):
+COPY Library_Info TO 'library_export.csv' WITH HEADER = TRUE;
+
+-- ==========================================
+-- g) IMPORT FROM CSV
+-- ==========================================
+
+-- Run in cqlsh:
+COPY Library_Info (Stud_Id, Stud_Name, Book_Name, Book_Id, Date_of_issue)
+FROM 'library_import.csv' WITH HEADER = TRUE;
+
+-- ==========================================
+-- END OF PROGRAM
+-- ==========================================
